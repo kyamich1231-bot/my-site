@@ -1,28 +1,37 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Mini Telegram</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Mini Telegram</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- Регистрация -->
+<!-- LOGIN -->
 <div id="login" class="login">
-  <h1>💬 Mini Telegram</h1>
-  <input id="nameInput" placeholder="Введите имя..." />
-  <button id="startBtn">Войти</button>
+  <h1>💜 Mini Telegram</h1>
+  <input id="nameInput" placeholder="Ваш никнейм">
+  <button id="startBtn">Продолжить</button>
 </div>
 
-<!-- Чат -->
+<!-- CHAT -->
 <div id="chat" class="chat hidden">
+
   <div class="header">Общий чат</div>
-  <div id="messages" class="messages"></div>
+
+  <div class="content">
+    <div id="messages" class="messages"></div>
+    <div id="users" class="users"></div>
+  </div>
 
   <div class="inputBox">
-    <input id="msgInput" placeholder="Введите сообщение..." />
+    <button id="emojiBtn">😀</button>
+    <button id="fileBtn">📎</button>
+    <input type="file" id="fileInput" hidden accept="image/*">
+    <input id="msgInput" placeholder="Сообщение...">
     <button id="sendBtn">➤</button>
   </div>
+
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
