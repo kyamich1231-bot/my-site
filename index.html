@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mini Telegram</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -10,8 +11,8 @@
 <!-- LOGIN -->
 <div id="login" class="login">
   <h1>💜 Mini Telegram</h1>
-  <input id="nameInput" placeholder="Ваш никнейм">
-  <button id="startBtn">Продолжить</button>
+  <input id="nameInput" placeholder="Введите никнейм">
+  <button id="startBtn">Войти</button>
 </div>
 
 <!-- CHAT -->
@@ -24,6 +25,9 @@
     <div id="users" class="users"></div>
   </div>
 
+  <!-- Emoji panel -->
+  <div id="emojiPanel" class="emojiPanel hidden"></div>
+
   <div class="inputBox">
     <button id="emojiBtn">😀</button>
     <button id="fileBtn">📎</button>
@@ -32,6 +36,11 @@
     <button id="sendBtn">➤</button>
   </div>
 
+</div>
+
+<!-- Fullscreen image -->
+<div id="imageViewer" class="imageViewer hidden">
+  <img id="viewerImg">
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
