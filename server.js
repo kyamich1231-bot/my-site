@@ -8,31 +8,32 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-// Раздаём файлы из корня
 app.use(express.static("./"));
 
-let messages = []; // временное хранение на сервере
+let messages = [];
+let users = {};
 
 io.on("connection", socket => {
-  console.log("Пользователь подключился");
-
-  // Отправляем историю новому клиенту
   socket.emit("history", messages);
+  io.emit("users", Object.values(users));
+
+  socket.on("join", username => {
+    users[socket.id] = username;
+    io.emit("users", Object.values(users));
+  });
 
   socket.on("message", data => {
     messages.push(data);
-
-    // Ограничим историю (чтобы не росла бесконечно)
-    if (messages.length > 100) messages.shift();
-
+    if (messages.length > 200) messages.shift();
     io.emit("message", data);
   });
 
   socket.on("disconnect", () => {
-    console.log("Пользователь вышел");
+    delete users[socket.id];
+    io.emit("users", Object.values(users));
   });
 });
 
 server.listen(PORT, () => {
-  console.log("Сервер запущен на порту:", PORT);
+  console.log("Server running:", PORT);
 });
