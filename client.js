@@ -11,16 +11,20 @@ const emojiBtn = document.getElementById("emojiBtn");
 const fileBtn = document.getElementById("fileBtn");
 const fileInput = document.getElementById("fileInput");
 
+const emojiPanel = document.getElementById("emojiPanel");
+const imageViewer = document.getElementById("imageViewer");
+const viewerImg = document.getElementById("viewerImg");
+
 const messagesDiv = document.getElementById("messages");
 const usersDiv = document.getElementById("users");
 
-let username = localStorage.getItem("username");
-let localMessages = JSON.parse(localStorage.getItem("messages")) || [];
+let username = null;
 
-// Всегда сначала показываем регистрацию
+/* ❗ ВСЕГДА СНАЧАЛА РЕГИСТРАЦИЯ */
 login.classList.remove("hidden");
 chat.classList.add("hidden");
 
+/* Вход */
 startBtn.onclick = () => {
   const name = nameInput.value.trim();
   if (!name) return alert("Введите ник!");
@@ -34,13 +38,26 @@ startBtn.onclick = () => {
   socket.emit("join", username);
 };
 
-// Emoji
+/* 😀 Emoji list */
+const emojis = "😀 😁 😂 🤣 😃 😄 😅 😆 😉 😊 😋 😎 😍 😘 😜 🤪 🤨 🧐 🤓 😕 🙃 😏 😭 😡 🤬 🥶 🤯 😱 🤡 💩 👻 👽 🤖 🎃 ❤️ 🧡 💛 💚 💙 💜 🖤 🤍 👍 👎 👏 🙌 🤝 ✌️ 🤞 🤟 👌".split(" ");
+
+emojis.forEach(e => {
+  const span = document.createElement("div");
+  span.className = "emoji";
+  span.innerText = e;
+  span.onclick = () => {
+    msgInput.value += e;
+    msgInput.focus();
+  };
+  emojiPanel.appendChild(span);
+});
+
+/* Emoji toggle */
 emojiBtn.onclick = () => {
-  msgInput.value += "😀";
-  msgInput.focus();
+  emojiPanel.classList.toggle("hidden");
 };
 
-// Отправка текста
+/* Отправка текста */
 sendBtn.onclick = sendMessage;
 msgInput.addEventListener("keydown", e => {
   if (e.key === "Enter") sendMessage();
@@ -58,7 +75,7 @@ function sendMessage() {
   msgInput.value = "";
 }
 
-// Файл (картинка)
+/* 📎 Фото */
 fileBtn.onclick = () => fileInput.click();
 
 fileInput.onchange = () => {
@@ -75,14 +92,12 @@ fileInput.onchange = () => {
   reader.readAsDataURL(file);
 };
 
-// Получение сообщений
+/* Сообщения */
 socket.on("message", msg => {
-  localMessages.push(msg);
-  localStorage.setItem("messages", JSON.stringify(localMessages));
   addMessage(msg);
 });
 
-// Онлайн пользователи
+/* Онлайн пользователи */
 socket.on("users", users => {
   usersDiv.innerHTML = "";
   users.forEach(u => {
@@ -93,6 +108,7 @@ socket.on("users", users => {
   });
 });
 
+/* Рендер сообщения */
 function addMessage(msg) {
   const div = document.createElement("div");
   div.className = "message";
@@ -110,6 +126,20 @@ function addMessage(msg) {
     ${content}
   `;
 
+  // Открытие картинки на весь экран
+  const img = div.querySelector("img");
+  if (img) {
+    img.onclick = () => {
+      viewerImg.src = img.src;
+      imageViewer.classList.remove("hidden");
+    };
+  }
+
   messagesDiv.appendChild(div);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
+
+/* Закрыть просмотр фото */
+imageViewer.onclick = () => {
+  imageViewer.classList.add("hidden");
+};
