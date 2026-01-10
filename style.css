@@ -1,4 +1,9 @@
-* {
+*
+.hidden {
+  display: none !important;
+}
+ 
+{
   box-sizing: border-box;
   font-family: Arial, sans-serif;
 }
