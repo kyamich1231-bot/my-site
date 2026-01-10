@@ -117,3 +117,19 @@ body {
   color: white;
   cursor: pointer;
 }
+
+.inputBox button {
+  min-width: 40px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #ff4ecd, #5f9cff);
+  color: white;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.message img {
+  max-width: 200px;
+  border-radius: 10px;
+  margin-top: 5px;
+}
