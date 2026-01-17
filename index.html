@@ -2,31 +2,50 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Передать видео</title>
+<title>Загрузка файлов</title>
 <style>
-body {
-    background:#111;
-    color:white;
-    font-family:Arial;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-}
-input, button {
-    font-size:22px;
-    margin-top:20px;
-}
+  body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+  .file-item { margin: 10px 0; padding: 10px; background: #fff; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
+  button { padding: 5px 10px; border: none; border-radius: 5px; background: #007bff; color: #fff; cursor: pointer; }
+  button:hover { background: #0056b3; }
 </style>
 </head>
 <body>
 
-<form action="/upload" method="post" enctype="multipart/form-data">
-    <h2>Передать видео или фото</h2>
-    <input type="file" name="file" accept="video/*,image/*" required>
-    <br>
-    <button type="submit">Передать</button>
-</form>
+<h2>Загрузите файл</h2>
+<input type="file" id="fileInput" multiple>
+<div id="fileList"></div>
+
+<script>
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+
+fileInput.addEventListener('change', () => {
+    for (const file of fileInput.files) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            const fileName = document.createElement('span');
+            fileName.textContent = file.name;
+            
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = 'Download';
+            downloadBtn.addEventListener('click', () => {
+                const a = document.createElement('a');
+                a.href = e.target.result;
+                a.download = file.name;
+                a.click();
+            });
+
+            fileItem.appendChild(fileName);
+            fileItem.appendChild(downloadBtn);
+            fileList.appendChild(fileItem);
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
 
 </body>
 </html>
