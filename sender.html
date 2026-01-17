@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Отправить видео</title>
+<style>
+body {
+    background:#111;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+    padding-top:100px;
+}
+input, button {
+    font-size:22px;
+    margin-top:20px;
+}
+</style>
+</head>
+<body>
+
+<h2>Передать фото или видео</h2>
+<input type="file" id="file" accept="video/*,image/*">
+<br>
+<button onclick="send()">Передать</button>
+
+<script>
+const ws = new WebSocket(location.origin.replace("http", "ws"));
+ws.binaryType = "arraybuffer";
+
+ws.onopen = () => ws.send("sender");
+
+function send() {
+    const file = document.getElementById("file").files[0];
+    const chunkSize = 64 * 1024;
+    let offset = 0;
+
+    ws.send(JSON.stringify({ name: file.name, size: file.size }));
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        ws.send(e.target.result);
+        offset += chunkSize;
+        if (offset < file.size) readSlice();
+        else ws.send("EOF");
+    };
+
+    function readSlice() {
+        reader.readAsArrayBuffer(file.slice(offset, offset + chunkSize));
+    }
+
+    readSlice();
+}
+</script>
+
+</body>
+</html>
