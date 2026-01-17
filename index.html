@@ -2,138 +2,91 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Загрузка файлов с превью</title>
+<title>Общий файловый чат</title>
+<script src="/socket.io/socket.io.js"></script>
 <style>
-  body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
-  h2 { text-align: center; }
-  
-  /* Область drag & drop */
-  #dropArea {
-    border: 2px dashed #007bff;
-    border-radius: 10px;
-    padding: 30px;
-    text-align: center;
-    margin-bottom: 20px;
-    background: #e9f0ff;
-    cursor: pointer;
-  }
-  #dropArea.hover { background: #d0e4ff; }
-
-  /* Файлы */
-  .file-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #fff;
-    margin: 10px 0;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  }
-
-  /* Превью */
-  .file-item img, .file-item video {
-    max-width: 100px;
-    max-height: 80px;
-    margin-right: 10px;
-    border-radius: 5px;
-  }
-
-  /* Кнопки */
-  button {
-    padding: 5px 10px;
-    border: none;
-    border-radius: 5px;
-    background: #007bff;
-    color: #fff;
-    cursor: pointer;
-  }
-  button:hover { background: #0056b3; }
+body { font-family: Arial; padding: 20px; background:#f0f2f5;}
+#dropArea { border: 2px dashed #007bff; padding: 30px; text-align:center; border-radius:10px; margin-bottom:20px; background:#e9f0ff; cursor:pointer;}
+#dropArea.hover { background:#d0e4ff; }
+.file-item { display:flex; align-items:center; justify-content:space-between; background:#fff; margin:10px 0; padding:10px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+.file-item img, .file-item video { max-width:100px; max-height:80px; margin-right:10px; border-radius:5px;}
+button { padding:5px 10px; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer; }
+button:hover { background:#0056b3; }
 </style>
 </head>
 <body>
-
-<h2>Загрузите файлы</h2>
-<div id="dropArea">Перетащи файлы сюда или кликни для выбора</div>
+<h2>Общий файловый чат</h2>
+<div id="dropArea">Перетащи файлы сюда или кликни</div>
 <input type="file" id="fileInput" multiple style="display:none;">
 <div id="fileList"></div>
 
 <script>
+const socket = io(); // подключаемся к серверу
+
 const dropArea = document.getElementById('dropArea');
 const fileInput = document.getElementById('fileInput');
 const fileList = document.getElementById('fileList');
 
-// Клик по dropArea открывает стандартный диалог
+// Drag & drop
 dropArea.addEventListener('click', () => fileInput.click());
+['dragenter','dragover'].forEach(e=>dropArea.addEventListener(e, ev=>{ev.preventDefault(); dropArea.classList.add('hover');}));
+['dragleave','drop'].forEach(e=>dropArea.addEventListener(e, ev=>{ev.preventDefault(); dropArea.classList.remove('hover');}));
 
-// Drag & drop эффекты
-['dragenter', 'dragover'].forEach(eventName => {
-  dropArea.addEventListener(eventName, (e) => {
-    e.preventDefault();
-    dropArea.classList.add('hover');
-  });
-});
-['dragleave', 'drop'].forEach(eventName => {
-  dropArea.addEventListener(eventName, (e) => {
-    e.preventDefault();
-    dropArea.classList.remove('hover');
-  });
-});
+fileInput.addEventListener('change', e=>handleFiles(e.target.files));
+dropArea.addEventListener('drop', e=>handleFiles(e.dataTransfer.files));
 
-// Когда файлы выбраны через input или drop
-fileInput.addEventListener('change', handleFiles);
-dropArea.addEventListener('drop', (e) => {
-  handleFiles(e.dataTransfer);
-});
-
-function handleFiles(filesData) {
-  const files = filesData.files || filesData;
-  for (const file of files) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const fileItem = document.createElement('div');
-      fileItem.className = 'file-item';
-
-      // Превью для изображений и видео
-      let preview;
-      if (file.type.startsWith('image/')) {
-        preview = document.createElement('img');
-        preview.src = e.target.result;
-      } else if (file.type.startsWith('video/')) {
-        preview = document.createElement('video');
-        preview.src = e.target.result;
-        preview.controls = true;
-      } else {
-        preview = document.createElement('span');
-        preview.textContent = file.name;
-      }
-
-      // Кнопка Download
-      const downloadBtn = document.createElement('button');
-      downloadBtn.textContent = 'Download';
-      downloadBtn.addEventListener('click', () => {
-        const a = document.createElement('a');
-        a.href = e.target.result;
-        a.download = file.name;
-        a.click();
-      });
-
-      // Контейнер с превью и кнопкой
-      const container = document.createElement('div');
-      container.style.display = 'flex';
-      container.style.alignItems = 'center';
-      container.style.justifyContent = 'space-between';
-      container.style.width = '100%';
-      container.appendChild(preview);
-      container.appendChild(downloadBtn);
-
-      fileItem.appendChild(container);
-      fileList.appendChild(fileItem);
-    };
-    reader.readAsDataURL(file);
-  }
+function handleFiles(files){
+    for(const file of files){
+        const reader = new FileReader();
+        reader.onload = (e)=>{
+            const fileData = {name:file.name,type:file.type,data:e.target.result};
+            socket.emit('uploadFile', fileData); // отправляем на сервер
+        }
+        reader.readAsDataURL(file);
+    }
 }
-</script>
 
+function renderFile(file){
+    const fileItem = document.createElement('div');
+    fileItem.className='file-item';
+
+    let preview;
+    if(file.type.startsWith('image/')){
+        preview = document.createElement('img'); preview.src=file.data;
+    } else if(file.type.startsWith('video/')){
+        preview = document.createElement('video'); preview.src=file.data; preview.controls=true;
+    } else {
+        preview = document.createElement('span'); preview.textContent=file.name;
+    }
+
+    const downloadBtn=document.createElement('button');
+    downloadBtn.textContent='Download';
+    downloadBtn.addEventListener('click', ()=> {
+        const a=document.createElement('a'); a.href=file.data; a.download=file.name; a.click();
+    });
+
+    const container=document.createElement('div');
+    container.style.display='flex';
+    container.style.alignItems='center';
+    container.style.justifyContent='space-between';
+    container.style.width='100%';
+    container.appendChild(preview);
+    container.appendChild(downloadBtn);
+
+    fileItem.appendChild(container);
+    fileList.appendChild(fileItem);
+}
+
+// Когда сервер присылает все файлы при подключении
+socket.on('allFiles', files=>{
+    fileList.innerHTML='';
+    files.forEach(f=>renderFile(f));
+});
+
+// Когда сервер сообщает о новом файле
+socket.on('newFile', file=>{
+    renderFile(file);
+});
+</script>
 </body>
 </html>
