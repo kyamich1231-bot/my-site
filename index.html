@@ -6,6 +6,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <style>
 body { font-family: Arial; padding: 20px; background:#f0f2f5;}
+h2 { text-align:center; }
 #dropArea { border: 2px dashed #007bff; padding: 30px; text-align:center; border-radius:10px; margin-bottom:20px; background:#e9f0ff; cursor:pointer;}
 #dropArea.hover { background:#d0e4ff; }
 .file-item { display:flex; align-items:center; justify-content:space-between; background:#fff; margin:10px 0; padding:10px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
@@ -21,14 +22,13 @@ button:hover { background:#0056b3; }
 <div id="fileList"></div>
 
 <script>
-const socket = io(); // подключаемся к серверу
+const socket = io();
 
 const dropArea = document.getElementById('dropArea');
 const fileInput = document.getElementById('fileInput');
 const fileList = document.getElementById('fileList');
 
-// Drag & drop
-dropArea.addEventListener('click', () => fileInput.click());
+dropArea.addEventListener('click', ()=>fileInput.click());
 ['dragenter','dragover'].forEach(e=>dropArea.addEventListener(e, ev=>{ev.preventDefault(); dropArea.classList.add('hover');}));
 ['dragleave','drop'].forEach(e=>dropArea.addEventListener(e, ev=>{ev.preventDefault(); dropArea.classList.remove('hover');}));
 
@@ -40,7 +40,7 @@ function handleFiles(files){
         const reader = new FileReader();
         reader.onload = (e)=>{
             const fileData = {name:file.name,type:file.type,data:e.target.result};
-            socket.emit('uploadFile', fileData); // отправляем на сервер
+            socket.emit('uploadFile', fileData);
         }
         reader.readAsDataURL(file);
     }
@@ -77,16 +77,9 @@ function renderFile(file){
     fileList.appendChild(fileItem);
 }
 
-// Когда сервер присылает все файлы при подключении
-socket.on('allFiles', files=>{
-    fileList.innerHTML='';
-    files.forEach(f=>renderFile(f));
-});
-
-// Когда сервер сообщает о новом файле
-socket.on('newFile', file=>{
-    renderFile(file);
-});
+// События с сервера
+socket.on('allFiles', files=>{ fileList.innerHTML=''; files.forEach(f=>renderFile(f)); });
+socket.on('newFile', file=>{ renderFile(file); });
 </script>
 </body>
 </html>
