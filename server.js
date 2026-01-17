@@ -1,28 +1,42 @@
 const express = require("express");
-const multer = require("multer");
-const path = require("path");
+const http = require("http");
+const WebSocket = require("ws");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Хранилище
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, "./"),
-    filename: (req, file, cb) => cb(null, "uploaded_" + file.originalname)
-});
-
-const upload = multer({ storage });
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
 app.use(express.static(__dirname));
 
-app.post("/upload", upload.single("file"), (req, res) => {
-    res.send("OK");
+let sender = null;
+let receiver = null;
+
+wss.on("connection", ws => {
+
+    ws.on("message", msg => {
+        // первый пакет — роль
+        if (msg.toString() === "sender") {
+            sender = ws;
+            return;
+        }
+        if (msg.toString() === "receiver") {
+            receiver = ws;
+            return;
+        }
+
+        // передаём данные
+        if (ws === sender && receiver) {
+            receiver.send(msg);
+        }
+    });
+
+    ws.on("close", () => {
+        if (ws === sender) sender = null;
+        if (ws === receiver) receiver = null;
+    });
 });
 
-app.get("/files", (req, res) => {
-    res.sendFile(path.join(__dirname, "uploaded_" + req.query.name));
-});
-
-app.listen(PORT, () => {
-    console.log("Server started");
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log("Server running");
 });
