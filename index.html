@@ -2,49 +2,137 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Загрузка файлов</title>
+<title>Загрузка файлов с превью</title>
 <style>
   body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
-  .file-item { margin: 10px 0; padding: 10px; background: #fff; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
-  button { padding: 5px 10px; border: none; border-radius: 5px; background: #007bff; color: #fff; cursor: pointer; }
+  h2 { text-align: center; }
+  
+  /* Область drag & drop */
+  #dropArea {
+    border: 2px dashed #007bff;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+    background: #e9f0ff;
+    cursor: pointer;
+  }
+  #dropArea.hover { background: #d0e4ff; }
+
+  /* Файлы */
+  .file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+
+  /* Превью */
+  .file-item img, .file-item video {
+    max-width: 100px;
+    max-height: 80px;
+    margin-right: 10px;
+    border-radius: 5px;
+  }
+
+  /* Кнопки */
+  button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    background: #007bff;
+    color: #fff;
+    cursor: pointer;
+  }
   button:hover { background: #0056b3; }
 </style>
 </head>
 <body>
 
-<h2>Загрузите файл</h2>
-<input type="file" id="fileInput" multiple>
+<h2>Загрузите файлы</h2>
+<div id="dropArea">Перетащи файлы сюда или кликни для выбора</div>
+<input type="file" id="fileInput" multiple style="display:none;">
 <div id="fileList"></div>
 
 <script>
+const dropArea = document.getElementById('dropArea');
 const fileInput = document.getElementById('fileInput');
 const fileList = document.getElementById('fileList');
 
-fileInput.addEventListener('change', () => {
-    for (const file of fileInput.files) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
-            const fileName = document.createElement('span');
-            fileName.textContent = file.name;
-            
-            const downloadBtn = document.createElement('button');
-            downloadBtn.textContent = 'Download';
-            downloadBtn.addEventListener('click', () => {
-                const a = document.createElement('a');
-                a.href = e.target.result;
-                a.download = file.name;
-                a.click();
-            });
+// Клик по dropArea открывает стандартный диалог
+dropArea.addEventListener('click', () => fileInput.click());
 
-            fileItem.appendChild(fileName);
-            fileItem.appendChild(downloadBtn);
-            fileList.appendChild(fileItem);
-        };
-        reader.readAsDataURL(file);
-    }
+// Drag & drop эффекты
+['dragenter', 'dragover'].forEach(eventName => {
+  dropArea.addEventListener(eventName, (e) => {
+    e.preventDefault();
+    dropArea.classList.add('hover');
+  });
 });
+['dragleave', 'drop'].forEach(eventName => {
+  dropArea.addEventListener(eventName, (e) => {
+    e.preventDefault();
+    dropArea.classList.remove('hover');
+  });
+});
+
+// Когда файлы выбраны через input или drop
+fileInput.addEventListener('change', handleFiles);
+dropArea.addEventListener('drop', (e) => {
+  handleFiles(e.dataTransfer);
+});
+
+function handleFiles(filesData) {
+  const files = filesData.files || filesData;
+  for (const file of files) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const fileItem = document.createElement('div');
+      fileItem.className = 'file-item';
+
+      // Превью для изображений и видео
+      let preview;
+      if (file.type.startsWith('image/')) {
+        preview = document.createElement('img');
+        preview.src = e.target.result;
+      } else if (file.type.startsWith('video/')) {
+        preview = document.createElement('video');
+        preview.src = e.target.result;
+        preview.controls = true;
+      } else {
+        preview = document.createElement('span');
+        preview.textContent = file.name;
+      }
+
+      // Кнопка Download
+      const downloadBtn = document.createElement('button');
+      downloadBtn.textContent = 'Download';
+      downloadBtn.addEventListener('click', () => {
+        const a = document.createElement('a');
+        a.href = e.target.result;
+        a.download = file.name;
+        a.click();
+      });
+
+      // Контейнер с превью и кнопкой
+      const container = document.createElement('div');
+      container.style.display = 'flex';
+      container.style.alignItems = 'center';
+      container.style.justifyContent = 'space-between';
+      container.style.width = '100%';
+      container.appendChild(preview);
+      container.appendChild(downloadBtn);
+
+      fileItem.appendChild(container);
+      fileList.appendChild(fileItem);
+    };
+    reader.readAsDataURL(file);
+  }
+}
 </script>
 
 </body>
