@@ -1,43 +1,35 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-
+const express = require('express');
+const http = require('http');
+const socketIO = require('socket.io');
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = socketIO(server);
 
-app.use(express.static(__dirname));
+const PORT = 3000;
 
-let senderSocket = null;
-let receiverSocket = null;
+// Хранилище файлов в памяти (для демо)
+let files = [];
 
-io.on("connection", (socket) => {
-    console.log("New connection");
+// Раздаем статику
+app.use(express.static(__dirname + '/public'));
 
-    // Получаем роль
-    socket.on("role", role => {
-        if (role === "sender") senderSocket = socket;
-        if (role === "receiver") receiverSocket = socket;
+io.on('connection', (socket) => {
+    console.log('Новый пользователь подключился');
+
+    // Отправляем сразу все файлы при подключении
+    socket.emit('allFiles', files);
+
+    // Когда клиент загружает файл
+    socket.on('uploadFile', (file) => {
+        files.push(file); // {name, type, data}
+        io.emit('newFile', file); // рассылаем всем
     });
 
-    // Получаем данные от отправителя и шлём получателю
-    socket.on("file-info", data => {
-        if (receiverSocket) receiverSocket.emit("file-info", data);
-    });
-
-    socket.on("file-chunk", chunk => {
-        if (receiverSocket) receiverSocket.emit("file-chunk", chunk);
-    });
-
-    socket.on("file-end", () => {
-        if (receiverSocket) receiverSocket.emit("file-end");
-    });
-
-    socket.on("disconnect", () => {
-        if (socket === senderSocket) senderSocket = null;
-        if (socket === receiverSocket) receiverSocket = null;
+    socket.on('disconnect', () => {
+        console.log('Пользователь отключился');
     });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log("Server running on port " + PORT));
+server.listen(PORT, () => {
+    console.log(`Сервер работает на http://localhost:${PORT}`);
+});
