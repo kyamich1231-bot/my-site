@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Получить файл</title>
+<style>
+body {
+    background:#111;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+    padding-top:100px;
+}
+input, button {
+    font-size:20px;
+}
+</style>
+</head>
+<body>
+
+<h2>Скачать файл</h2>
+<input id="name" placeholder="uploaded_ИМЯФАЙЛА.mp4">
+<br><br>
+<button onclick="download()">Скачать</button>
+
+<script>
+function download() {
+    const name = document.getElementById("name").value;
+    window.location = "/files?name=" + name.replace("uploaded_", "");
+}
+</script>
+
+</body>
+</html>
