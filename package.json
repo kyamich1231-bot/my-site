@@ -1,6 +1,7 @@
 {
-  "name": "socketio-video-transfer",
+  "name": "shared-files-socketio",
   "version": "1.0.0",
+  "description": "Общий файловый чат на Socket.IO",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
