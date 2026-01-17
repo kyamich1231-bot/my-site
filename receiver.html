@@ -4,60 +4,46 @@
 <meta charset="UTF-8">
 <title>Получить файл</title>
 <style>
-body {
-    background:#111;
-    color:white;
-    font-family:Arial;
-    text-align:center;
-    padding-top:100px;
-}
-button {
-    font-size:22px;
-    margin-top:20px;
-}
+body { background:#111; color:white; font-family:Arial; text-align:center; padding-top:100px; }
+button { font-size:22px; margin-top:20px; display:none; }
 </style>
 </head>
 <body>
 
 <h2 id="status">Ожидание файла...</h2>
-<button id="download" style="display:none">Скачать</button>
+<button id="download">Скачать</button>
 
+<script src="/socket.io/socket.io.js"></script>
 <script>
-const ws = new WebSocket(location.origin.replace("http", "ws"));
-ws.binaryType = "arraybuffer";
+const socket = io();
+socket.emit("role", "receiver");
 
 let chunks = [];
 let fileName = "";
 
-ws.onopen = () => ws.send("receiver");
+socket.on("file-info", data => {
+    fileName = data.name;
+    document.getElementById("status").innerText = "Получаю: " + fileName;
+    chunks = [];
+});
 
-ws.onmessage = e => {
-    if (typeof e.data === "string") {
-        if (e.data === "EOF") {
-            const blob = new Blob(chunks);
-            const url = URL.createObjectURL(blob);
+socket.on("file-chunk", chunk => {
+    chunks.push(chunk);
+});
 
-            const btn = document.getElementById("download");
-            btn.style.display = "inline-block";
-            btn.onclick = () => {
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = fileName;
-                a.click();
-            };
-
-            document.getElementById("status").innerText = "Файл получен";
-            chunks = [];
-            return;
-        }
-
-        const info = JSON.parse(e.data);
-        fileName = info.name;
-        document.getElementById("status").innerText = "Получаю: " + fileName;
-    } else {
-        chunks.push(e.data);
-    }
-};
+socket.on("file-end", () => {
+    const blob = new Blob(chunks);
+    const url = URL.createObjectURL(blob);
+    const btn = document.getElementById("download");
+    btn.style.display = "inline-block";
+    btn.onclick = () => {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        a.click();
+    };
+    document.getElementById("status").innerText = "Файл получен: " + fileName;
+});
 </script>
 
 </body>
